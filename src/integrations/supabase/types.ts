@@ -134,6 +134,133 @@ export type Database = {
         }
         Relationships: []
       }
+      tabata_favorite_exercises: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          rest_seconds: number
+          trainer_id: string
+          work_seconds: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          rest_seconds?: number
+          trainer_id: string
+          work_seconds?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          rest_seconds?: number
+          trainer_id?: string
+          work_seconds?: number
+        }
+        Relationships: []
+      }
+      tabata_routine_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: number
+          rest_seconds: number
+          routine_id: string
+          work_seconds: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          rest_seconds?: number
+          routine_id: string
+          work_seconds?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          rest_seconds?: number
+          routine_id?: string
+          work_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tabata_routine_items_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "tabata_routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tabata_routines: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorite: boolean
+          name: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          name?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          name?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tabata_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          routine_id: string
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          routine_id: string
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          routine_id?: string
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tabata_sessions_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "tabata_routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_items: {
         Row: {
           client_id: string
@@ -298,6 +425,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_tabata_session: { Args: { p_session_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

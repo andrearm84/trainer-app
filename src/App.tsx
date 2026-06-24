@@ -14,6 +14,9 @@ import ExerciseLibrary from "./pages/ExerciseLibrary";
 import ExerciseDetail from "./pages/ExerciseDetail";
 import MyWorkout from "./pages/MyWorkout";
 import AdminUsers from "./pages/AdminUsers";
+import TabataRoutines from "./pages/TabataRoutines";
+import TabataController from "./pages/TabataController";
+import TabataDisplay from "./pages/TabataDisplay";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -27,6 +30,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/tv/:sessionId" element={<TabataDisplay />} />
             <Route
               element={
                 <ProtectedRoute>
@@ -39,6 +43,8 @@ const App = () => (
               <Route path="/esercizi" element={<ExerciseLibrary />} />
               <Route path="/esercizi/:id" element={<ExerciseDetail />} />
               <Route path="/scheda" element={<MyWorkout />} />
+              <Route path="/tabata" element={<TabataRoutines />} />
+              <Route path="/tabata/controller/:sessionId" element={<TabataController />} />
               <Route path="/admin/utenti" element={<AdminUsers />} />
             </Route>
             <Route path="*" element={<NotFound />} />

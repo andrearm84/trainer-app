@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Dumbbell, Users, BookOpen, LogOut, ClipboardList, Sun, Moon, Shield } from "lucide-react";
+import { Dumbbell, Users, BookOpen, LogOut, ClipboardList, Sun, Moon, Shield, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppRole } from "@/hooks/useAppRole";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const trainerNav = [
   { to: "/", label: "Clienti", icon: Users, end: true },
   { to: "/esercizi", label: "Libreria", icon: BookOpen },
+  { to: "/tabata", label: "Tabata", icon: Timer },
 ];
 const clientNav = [
   { to: "/scheda", label: "La mia scheda", icon: ClipboardList, end: true },
