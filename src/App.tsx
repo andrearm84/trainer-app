@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 import RoleHome from "./components/RoleHome";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
@@ -30,6 +31,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/tv/:sessionId" element={<TabataDisplay />} />
             <Route
               element={
