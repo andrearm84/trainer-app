@@ -21,8 +21,6 @@ const PHASE = {
     ring: "ring-cyan-400/60",
     glow: "shadow-[0_0_90px_-10px_rgba(34,211,238,0.7)]",
     bgGlow: "bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(34,211,238,0.28),transparent_70%)]",
-    rowBg: "bg-cyan-400/10",
-    rowText: "text-cyan-300",
     badge: "border-cyan-400/40 text-cyan-300 bg-cyan-400/10",
     dot: "bg-cyan-400 shadow-[0_0_12px_3px_rgba(34,211,238,0.8)]",
     textShadow: "[text-shadow:0_0_35px_rgba(34,211,238,0.6)]",
@@ -32,21 +30,13 @@ const PHASE = {
     ring: "ring-sky-300/30",
     glow: "shadow-[0_0_50px_-15px_rgba(125,211,252,0.35)]",
     bgGlow: "bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(125,211,252,0.12),transparent_70%)]",
-    rowBg: "bg-sky-300/10",
-    rowText: "text-sky-200",
     badge: "border-sky-300/30 text-sky-200 bg-sky-300/10",
     dot: "bg-sky-300",
     textShadow: "",
   },
 } as const;
 
-const ExerciseTable = ({
-  items, currentIndex, phase,
-}: {
-  items: PublicTabataSession["items"];
-  currentIndex?: number;
-  phase?: "work" | "rest";
-}) => (
+const ExerciseTable = ({ items }: { items: PublicTabataSession["items"] }) => (
   <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/40 backdrop-blur overflow-hidden shadow-[0_0_50px_-20px_rgba(0,0,0,0.9)]">
     <table className="w-full text-left">
       <thead>
@@ -58,25 +48,14 @@ const ExerciseTable = ({
         </tr>
       </thead>
       <tbody>
-        {items.map((item, idx) => {
-          const isCurrent = idx === currentIndex;
-          const colors = phase ? PHASE[phase] : null;
-          return (
-            <tr
-              key={item.position}
-              className={`border-t border-white/5 transition-smooth ${isCurrent && colors ? colors.rowBg : ""}`}
-            >
-              <td className={`px-4 py-3 tabular-nums font-bold ${isCurrent && colors ? colors.rowText : "text-zinc-500"}`}>
-                {idx + 1}
-              </td>
-              <td className={`px-4 py-3 uppercase font-bold ${isCurrent && colors ? colors.rowText : "text-zinc-300"}`}>
-                {item.name}
-              </td>
-              <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">{item.work_seconds}s</td>
-              <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">{item.rest_seconds}s</td>
-            </tr>
-          );
-        })}
+        {items.map((item, idx) => (
+          <tr key={item.position} className="border-t border-white/5">
+            <td className="px-4 py-3 tabular-nums font-bold text-zinc-500">{idx + 1}</td>
+            <td className="px-4 py-3 uppercase font-bold text-zinc-300">{item.name}</td>
+            <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">{item.work_seconds}s</td>
+            <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">{item.rest_seconds}s</td>
+          </tr>
+        ))}
       </tbody>
     </table>
   </div>
@@ -192,8 +171,8 @@ const TabataDisplay = () => {
             <ExerciseTable items={items} />
           </div>
         ) : (
-          <div className="flex-1 w-full max-w-6xl flex flex-col lg:flex-row items-center lg:items-start justify-center gap-10">
-            <div className="flex flex-col items-center text-center lg:w-[400px] shrink-0">
+          <div className="flex-1 w-full max-w-6xl flex flex-col landscape:flex-row items-center landscape:items-start justify-center gap-10">
+            <div className="flex flex-col items-center text-center landscape:w-[400px] shrink-0">
               <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm md:text-base font-bold uppercase tracking-[0.25em] mb-4 ${
                 liveState.paused ? "border-zinc-500/40 text-zinc-300 bg-zinc-500/10" : colors.badge
               }`}>
@@ -203,7 +182,7 @@ const TabataDisplay = () => {
 
               <div className={`relative rounded-[2rem] border border-white/10 bg-black/40 px-10 py-8 ring-2 ${colors.ring} ${colors.glow} mt-2`}>
                 <p
-                  className={`font-display font-bold text-[20vw] lg:text-[8vw] leading-none tabular-nums ${
+                  className={`font-display font-bold portrait:text-[22vh] landscape:text-[16vh] leading-none tabular-nums ${
                     pulsing ? "animate-pulse" : ""
                   } ${colors.text} ${colors.textShadow}`}
                 >
@@ -216,7 +195,7 @@ const TabataDisplay = () => {
               </p>
             </div>
 
-            <ExerciseTable items={items} currentIndex={liveState.item_index} phase={phaseKey} />
+            <ExerciseTable items={items} />
           </div>
         )}
       </div>
