@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,47 @@ const fmt = (totalSec: number) => {
   const r = s % 60;
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 };
+
+const ExerciseTable = ({
+  items, currentIndex, phase,
+}: {
+  items: PublicTabataSession["items"];
+  currentIndex?: number;
+  phase?: "work" | "rest" | "done";
+}) => (
+  <div className="w-full max-w-2xl rounded-xl border border-border overflow-hidden">
+    <table className="w-full text-left">
+      <thead>
+        <tr className="bg-card text-muted-foreground text-xs uppercase tracking-widest">
+          <th className="px-4 py-3 w-14">#</th>
+          <th className="px-4 py-3">Esercizio</th>
+          <th className="px-4 py-3 text-right">Lavoro</th>
+          <th className="px-4 py-3 text-right">Recupero</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item, idx) => {
+          const isCurrent = idx === currentIndex;
+          return (
+            <tr
+              key={item.position}
+              className={`border-t border-border transition-smooth ${
+                isCurrent ? (phase === "rest" ? "bg-accent/20" : "bg-primary/20") : ""
+              }`}
+            >
+              <td className="px-4 py-3 text-muted-foreground tabular-nums">{idx + 1}</td>
+              <td className={`px-4 py-3 uppercase ${isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                {item.name}
+              </td>
+              <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{item.work_seconds}s</td>
+              <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{item.rest_seconds}s</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+);
 
 const TabataDisplay = () => {
   const { sessionId } = useParams();
@@ -63,21 +104,25 @@ const TabataDisplay = () => {
     );
   }
 
+  const items = session.items;
+
   if (!liveState) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-center px-6">
-        <div>
-          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+      <div className="min-h-screen flex flex-col items-center px-6 md:px-12 py-10 gap-10 bg-background">
+        <p className="font-display text-lg md:text-xl uppercase tracking-[0.4em] text-muted-foreground">
+          Training Space
+        </p>
+        <div className="flex flex-col items-center text-center gap-3">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-2xl font-display uppercase text-muted-foreground">In attesa del trainer…</p>
-          <p className="text-sm text-muted-foreground mt-2">{session.routine_name}</p>
+          <p className="text-sm text-muted-foreground">{session.routine_name}</p>
         </div>
+        <ExerciseTable items={items} />
       </div>
     );
   }
 
-  const items = session.items;
   const current = items[liveState.item_index];
-  const next = items[liveState.item_index + 1];
   const isDone = liveState.phase === "done";
   const isWork = liveState.phase === "work";
 
@@ -91,39 +136,43 @@ const TabataDisplay = () => {
 
   return (
     <div
-      className={`min-h-screen flex flex-col items-center justify-center px-8 transition-smooth ${
+      className={`min-h-screen flex flex-col items-center px-6 md:px-12 py-10 gap-10 transition-smooth ${
         isDone ? "bg-background" : isWork ? "bg-primary/15" : "bg-accent/15"
       }`}
     >
-      <p className="fixed top-6 left-1/2 -translate-x-1/2 font-display text-lg md:text-xl uppercase tracking-[0.4em] text-muted-foreground">
+      <p className="font-display text-lg md:text-xl uppercase tracking-[0.4em] text-muted-foreground">
         Training Space
       </p>
 
       {isDone ? (
-        <div className="text-center">
-          <p className="font-display text-6xl md:text-8xl uppercase text-foreground">Lezione completata</p>
-          <p className="text-2xl text-muted-foreground mt-4 uppercase tracking-widest">{session.routine_name}</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
+          <p className="font-display text-5xl md:text-7xl uppercase text-foreground">Lezione completata</p>
+          <p className="text-xl text-muted-foreground uppercase tracking-widest">{session.routine_name}</p>
+          <ExerciseTable items={items} />
         </div>
       ) : (
-        <>
-          <p className="text-xl md:text-3xl uppercase tracking-[0.3em] text-muted-foreground mb-4">
-            {liveState.paused ? "In pausa" : isWork ? "Lavoro" : "Recupero"}
-          </p>
-          <h1 className="font-display text-6xl md:text-9xl uppercase text-center leading-none mb-8 px-4">
-            {current?.name}
-          </h1>
-          <p
-            className={`font-display text-[18vw] md:text-[14vw] leading-none tabular-nums ${
-              pulsing ? "animate-pulse" : ""
-            } ${isWork ? "text-primary" : "text-accent"}`}
-          >
-            {fmt(secLeft)}
-          </p>
-          <div className="mt-10 flex items-center gap-8 text-xl md:text-2xl uppercase tracking-widest text-muted-foreground">
-            <span>Esercizio {liveState.item_index + 1} / {items.length}</span>
-            {next && <span>Prossimo: {next.name}</span>}
+        <div className="flex-1 w-full max-w-6xl flex flex-col lg:flex-row items-center lg:items-start justify-center gap-10">
+          <div className="flex flex-col items-center text-center lg:w-[380px] shrink-0">
+            <p className="text-xl md:text-2xl uppercase tracking-[0.3em] text-muted-foreground mb-3">
+              {liveState.paused ? "In pausa" : isWork ? "Lavoro" : "Recupero"}
+            </p>
+            <h1 className="font-display text-5xl md:text-6xl uppercase leading-none mb-6">
+              {current?.name}
+            </h1>
+            <p
+              className={`font-display text-[22vw] lg:text-[9vw] leading-none tabular-nums ${
+                pulsing ? "animate-pulse" : ""
+              } ${isWork ? "text-primary" : "text-accent"}`}
+            >
+              {fmt(secLeft)}
+            </p>
+            <p className="mt-6 text-lg md:text-xl uppercase tracking-widest text-muted-foreground">
+              Round {liveState.item_index + 1} / {items.length}
+            </p>
           </div>
-        </>
+
+          <ExerciseTable items={items} currentIndex={liveState.item_index} phase={liveState.phase} />
+        </div>
       )}
     </div>
   );
