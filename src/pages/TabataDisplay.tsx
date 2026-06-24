@@ -160,7 +160,6 @@ const TabataDisplay = () => {
     );
   }
 
-  const current = items[liveState.item_index];
   const isDone = liveState.phase === "done";
   const isWork = liveState.phase === "work";
   const phaseKey = isWork ? "work" : "rest";
@@ -202,11 +201,7 @@ const TabataDisplay = () => {
                 {liveState.paused ? "In pausa" : isWork ? "Lavoro" : "Recupero"}
               </span>
 
-              <h1 className="font-display font-bold text-4xl md:text-5xl uppercase leading-tight mb-6 text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.8)]">
-                {current?.name}
-              </h1>
-
-              <div className={`relative rounded-[2rem] border border-white/10 bg-black/40 px-10 py-8 ring-2 ${colors.ring} ${colors.glow}`}>
+              <div className={`relative rounded-[2rem] border border-white/10 bg-black/40 px-10 py-8 ring-2 ${colors.ring} ${colors.glow} mt-2`}>
                 <p
                   className={`font-display font-bold text-[20vw] lg:text-[8vw] leading-none tabular-nums ${
                     pulsing ? "animate-pulse" : ""
