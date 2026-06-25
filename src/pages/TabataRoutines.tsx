@@ -116,6 +116,11 @@ const TabataRoutines = () => {
     }
   };
 
+  const copyTvLink = async (routineId: string) => {
+    await navigator.clipboard.writeText(`${window.location.origin}/tv/${routineId}`);
+    toast.success("Link TV copiato: resta fisso, puoi salvarlo come preferito");
+  };
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
@@ -189,6 +194,9 @@ const TabataRoutines = () => {
                   <Button variant="hero" disabled={sortedItems.length === 0 || starting} onClick={handleStart}>
                     {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
                     Avvia lezione
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => copyTvLink(current.id)} aria-label="Copia link TV">
+                    <Tv className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -309,7 +317,7 @@ const TabataRoutines = () => {
               </div>
 
               <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
-                <Tv className="h-3.5 w-3.5" /> Avviando la lezione otterrai un link pubblico da aprire sulle TV, senza login.
+                <Tv className="h-3.5 w-3.5" /> Il link TV di questa lezione è fisso: copialo e salvalo come preferito, niente login richiesto.
               </div>
             </>
           )}

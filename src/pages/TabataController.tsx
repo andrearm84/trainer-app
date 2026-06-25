@@ -41,10 +41,12 @@ const TabataController = () => {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const initializedRef = useRef(false);
 
-  // Canale realtime: il pannello trasmette lo stato, le TV lo ricevono e calcolano il countdown in locale
+  // Canale realtime keyato sulla routine (non sulla sessione): il pannello trasmette lo
+  // stato, le TV con link fisso /tv/:routineId lo ricevono e calcolano il countdown in locale
+  const routineId = session?.routine_id;
   useEffect(() => {
-    if (!sessionId) return;
-    const channel = supabase.channel(tabataChannelName(sessionId));
+    if (!routineId) return;
+    const channel = supabase.channel(tabataChannelName(routineId));
     channel.on("broadcast", { event: "request-sync" }, () => {
       if (liveRef.current) channel.send({ type: "broadcast", event: "state", payload: liveRef.current });
     });
@@ -57,7 +59,7 @@ const TabataController = () => {
       channelRef.current = null;
       setReady(false);
     };
-  }, [sessionId]);
+  }, [routineId]);
 
   // Stato iniziale, una volta sole quando gli esercizi sono pronti
   useEffect(() => {
@@ -158,7 +160,7 @@ const TabataController = () => {
     navigate("/tabata");
   };
 
-  const tvUrl = sessionId ? `${window.location.origin}/tv/${sessionId}` : "";
+  const tvUrl = routineId ? `${window.location.origin}/tv/${routineId}` : "";
   const copyLink = async () => {
     await navigator.clipboard.writeText(tvUrl);
     toast.success("Link copiato");

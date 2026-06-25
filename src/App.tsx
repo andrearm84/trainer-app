@@ -32,7 +32,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/tv/:sessionId" element={<TabataDisplay />} />
+            <Route path="/tv/:routineId" element={<TabataDisplay />} />
             <Route
               element={
                 <ProtectedRoute>

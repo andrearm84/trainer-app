@@ -425,7 +425,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_public_tabata_session: { Args: { p_session_id: string }; Returns: Json }
+      get_public_tabata_routine: { Args: { p_routine_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

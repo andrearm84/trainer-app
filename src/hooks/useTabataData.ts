@@ -7,7 +7,9 @@ export type TabataRoutine = Database["public"]["Tables"]["tabata_routines"]["Row
 export type TabataRoutineItem = Database["public"]["Tables"]["tabata_routine_items"]["Row"];
 export type TabataSession = Database["public"]["Tables"]["tabata_sessions"]["Row"];
 
-export const tabataChannelName = (sessionId: string) => `tabata-session-${sessionId}`;
+// Canale keyato sulla routine (non sulla sessione): così l'URL della TV resta
+// fisso anche tra una lezione e la successiva sulla stessa sequenza.
+export const tabataChannelName = (routineId: string) => `tabata-routine-${routineId}`;
 
 // Stato live trasmesso via Realtime broadcast dal pannello di controllo alle TV.
 // phase_ends_at è un timestamp assoluto (epoch ms): ogni TV calcola il countdown
@@ -242,15 +244,16 @@ export const useEndSession = () => {
 };
 
 // --------- PUBLIC (TV, nessun login) ---------
-export type PublicTabataSession = {
+// Il link pubblico è per lezione (routine), non per singola sessione: resta
+// fisso e può essere salvato come preferito sulla TV.
+export type PublicTabataRoutine = {
   id: string;
-  status: string;
   routine_name: string;
   items: { position: number; name: string; work_seconds: number; rest_seconds: number }[];
 };
 
-export const fetchPublicTabataSession = async (sessionId: string): Promise<PublicTabataSession | null> => {
-  const { data, error } = await supabase.rpc("get_public_tabata_session", { p_session_id: sessionId });
+export const fetchPublicTabataRoutine = async (routineId: string): Promise<PublicTabataRoutine | null> => {
+  const { data, error } = await supabase.rpc("get_public_tabata_routine", { p_routine_id: routineId });
   if (error) throw error;
-  return data as unknown as PublicTabataSession | null;
+  return data as unknown as PublicTabataRoutine | null;
 };

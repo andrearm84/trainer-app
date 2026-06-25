@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 import { Loader2, Tv, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  fetchPublicTabataSession, tabataChannelName,
-  type PublicTabataSession, type TabataLiveState,
+  fetchPublicTabataRoutine, tabataChannelName,
+  type PublicTabataRoutine, type TabataLiveState,
 } from "@/hooks/useTabataData";
 
 const fmt = (totalSec: number) => {
@@ -69,7 +69,7 @@ const PHASE = {
   },
 } as const;
 
-const ExerciseTable = ({ items }: { items: PublicTabataSession["items"] }) => (
+const ExerciseTable = ({ items }: { items: PublicTabataRoutine["items"] }) => (
   <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/40 backdrop-blur overflow-hidden shadow-[0_0_50px_-20px_rgba(0,0,0,0.9)]">
     <table className="w-full text-left">
       <thead>
@@ -115,8 +115,8 @@ const Brand = () => (
 );
 
 const TabataDisplay = () => {
-  const { sessionId } = useParams();
-  const [session, setSession] = useState<PublicTabataSession | null | undefined>(undefined);
+  const { routineId } = useParams();
+  const [routine, setRoutine] = useState<PublicTabataRoutine | null | undefined>(undefined);
   const [liveState, setLiveState] = useState<TabataLiveState | null>(null);
   const [now, setNow] = useState(Date.now());
   const [soundReady, setSoundReady] = useState(false);
@@ -135,13 +135,13 @@ const TabataDisplay = () => {
   };
 
   useEffect(() => {
-    if (!sessionId) return;
-    fetchPublicTabataSession(sessionId).then(setSession).catch(() => setSession(null));
-  }, [sessionId]);
+    if (!routineId) return;
+    fetchPublicTabataRoutine(routineId).then(setRoutine).catch(() => setRoutine(null));
+  }, [routineId]);
 
   useEffect(() => {
-    if (!sessionId) return;
-    const channel = supabase.channel(tabataChannelName(sessionId));
+    if (!routineId) return;
+    const channel = supabase.channel(tabataChannelName(routineId));
     channel.on("broadcast", { event: "state" }, ({ payload }) => {
       setLiveState(payload as TabataLiveState);
     });
@@ -151,7 +151,7 @@ const TabataDisplay = () => {
       }
     });
     return () => { supabase.removeChannel(channel); };
-  }, [sessionId]);
+  }, [routineId]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -188,7 +188,7 @@ const TabataDisplay = () => {
     else if (liveState.phase === "done") speak("Stop");
   }, [soundReady, liveState?.item_index, liveState?.phase, liveState?.paused]);
 
-  if (session === undefined) {
+  if (routine === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#06080c]">
         <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
@@ -196,7 +196,7 @@ const TabataDisplay = () => {
     );
   }
 
-  if (session === null) {
+  if (routine === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#06080c] text-center px-6">
         <div>
@@ -207,7 +207,7 @@ const TabataDisplay = () => {
     );
   }
 
-  const items = session.items;
+  const items = routine.items;
 
   if (!liveState) {
     return (
@@ -218,7 +218,7 @@ const TabataDisplay = () => {
           <div className="flex flex-col items-center text-center gap-3">
             <Loader2 className="h-10 w-10 animate-spin text-orange-400" />
             <p className="text-2xl font-display font-bold uppercase text-white">In attesa del trainer…</p>
-            <p className="text-sm text-zinc-400 font-semibold">{session.routine_name}</p>
+            <p className="text-sm text-zinc-400 font-semibold">{routine.routine_name}</p>
           </div>
           <ExerciseTable items={items} />
         </div>
@@ -249,7 +249,7 @@ const TabataDisplay = () => {
             <p className="font-display font-bold text-5xl md:text-7xl uppercase text-white [text-shadow:0_2px_30px_rgba(255,255,255,0.2)]">
               Lezione completata
             </p>
-            <p className="text-lg md:text-xl text-zinc-400 uppercase tracking-widest font-bold">{session.routine_name}</p>
+            <p className="text-lg md:text-xl text-zinc-400 uppercase tracking-widest font-bold">{routine.routine_name}</p>
             <ExerciseTable items={items} />
           </div>
         ) : (
