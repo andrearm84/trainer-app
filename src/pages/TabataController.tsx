@@ -67,6 +67,7 @@ const TabataController = () => {
     initializedRef.current = true;
     setLiveState({
       item_index: 0,
+      round: 1,
       phase: "work",
       paused: false,
       phase_ends_at: Date.now() + items[0].work_seconds * 1000,
@@ -102,12 +103,20 @@ const TabataController = () => {
       const restSec = its[ls.item_index]?.rest_seconds ?? 0;
       setLiveState({ ...ls, phase: "rest", paused: false, phase_ends_at: Date.now() + restSec * 1000, remaining_ms: null });
     } else if (ls.phase === "rest") {
+      const totalRounds = its[ls.item_index]?.rounds ?? 1;
+      if (ls.round < totalRounds) {
+        setLiveState({
+          ...ls, round: ls.round + 1, phase: "work", paused: false,
+          phase_ends_at: Date.now() + (its[ls.item_index]?.work_seconds ?? 0) * 1000, remaining_ms: null,
+        });
+        return;
+      }
       const nextIndex = ls.item_index + 1;
       if (nextIndex >= its.length) {
         setLiveState({ ...ls, phase: "done", phase_ends_at: null, remaining_ms: null });
       } else {
         setLiveState({
-          item_index: nextIndex, phase: "work", paused: false,
+          item_index: nextIndex, round: 1, phase: "work", paused: false,
           phase_ends_at: Date.now() + its[nextIndex].work_seconds * 1000, remaining_ms: null,
         });
       }
@@ -144,7 +153,7 @@ const TabataController = () => {
     if (!ls || its.length === 0) return;
     const prevIndex = Math.max(0, ls.item_index - 1);
     setLiveState({
-      item_index: prevIndex, phase: "work", paused: false,
+      item_index: prevIndex, round: 1, phase: "work", paused: false,
       phase_ends_at: Date.now() + its[prevIndex].work_seconds * 1000, remaining_ms: null,
     });
   };
@@ -152,7 +161,7 @@ const TabataController = () => {
   const restart = () => {
     const its = itemsRef.current;
     if (its.length === 0) return;
-    setLiveState({ item_index: 0, phase: "work", paused: false, phase_ends_at: Date.now() + its[0].work_seconds * 1000, remaining_ms: null });
+    setLiveState({ item_index: 0, round: 1, phase: "work", paused: false, phase_ends_at: Date.now() + its[0].work_seconds * 1000, remaining_ms: null });
   };
 
   const handleEnd = async () => {
@@ -220,6 +229,7 @@ const TabataController = () => {
         )}
         <p className="text-sm text-muted-foreground uppercase tracking-wider">
           Esercizio {(liveState?.item_index ?? 0) + 1} / {items.length}
+          {!isDone && current && current.rounds > 1 && <> · Round {liveState?.round ?? 1}/{current.rounds}</>}
           {!isDone && next && <> · Prossimo: {next.name}</>}
         </p>
       </div>

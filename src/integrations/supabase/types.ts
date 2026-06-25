@@ -140,6 +140,7 @@ export type Database = {
           id: string
           name: string
           rest_seconds: number
+          rounds: number
           trainer_id: string
           work_seconds: number
         }
@@ -148,6 +149,7 @@ export type Database = {
           id?: string
           name: string
           rest_seconds?: number
+          rounds?: number
           trainer_id: string
           work_seconds?: number
         }
@@ -156,6 +158,7 @@ export type Database = {
           id?: string
           name?: string
           rest_seconds?: number
+          rounds?: number
           trainer_id?: string
           work_seconds?: number
         }
@@ -169,6 +172,7 @@ export type Database = {
           position: number
           rest_seconds: number
           routine_id: string
+          rounds: number
           work_seconds: number
         }
         Insert: {
@@ -178,6 +182,7 @@ export type Database = {
           position?: number
           rest_seconds?: number
           routine_id: string
+          rounds?: number
           work_seconds?: number
         }
         Update: {
@@ -187,6 +192,7 @@ export type Database = {
           position?: number
           rest_seconds?: number
           routine_id?: string
+          rounds?: number
           work_seconds?: number
         }
         Relationships: [

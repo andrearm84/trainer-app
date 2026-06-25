@@ -78,6 +78,7 @@ const ExerciseTable = ({ items }: { items: PublicTabataRoutine["items"] }) => (
           <th className="px-4 py-3">Esercizio</th>
           <th className="px-4 py-3 text-right">Lavoro</th>
           <th className="px-4 py-3 text-right">Recupero</th>
+          <th className="px-4 py-3 text-right">Round</th>
         </tr>
       </thead>
       <tbody>
@@ -87,6 +88,7 @@ const ExerciseTable = ({ items }: { items: PublicTabataRoutine["items"] }) => (
             <td className="px-4 py-3 uppercase font-bold text-zinc-300">{item.name}</td>
             <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">{item.work_seconds}s</td>
             <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">{item.rest_seconds}s</td>
+            <td className="px-4 py-3 text-right tabular-nums font-semibold text-zinc-500">x{item.rounds}</td>
           </tr>
         ))}
       </tbody>
@@ -231,6 +233,7 @@ const TabataDisplay = () => {
   const isWork = liveState.phase === "work";
   const phaseKey = isWork ? "work" : "rest";
   const colors = PHASE[phaseKey];
+  const currentItem = items[liveState.item_index];
 
   const pulsing = !isDone && secLeft <= 3 && secLeft > 0;
 
@@ -273,7 +276,8 @@ const TabataDisplay = () => {
               </div>
 
               <p className="mt-6 inline-flex items-center gap-2 text-sm md:text-base font-bold uppercase tracking-widest text-zinc-300 border border-white/10 rounded-full px-4 py-1.5 bg-white/5">
-                Round {liveState.item_index + 1} / {items.length}
+                Esercizio {liveState.item_index + 1} / {items.length}
+                {currentItem && currentItem.rounds > 1 && <> · Round {liveState.round}/{currentItem.rounds}</>}
               </p>
             </div>
 

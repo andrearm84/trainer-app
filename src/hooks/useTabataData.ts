@@ -16,6 +16,7 @@ export const tabataChannelName = (routineId: string) => `tabata-routine-${routin
 // in locale, così resta corretto anche con latenza di rete o messaggi persi.
 export type TabataLiveState = {
   item_index: number;
+  round: number;
   phase: "work" | "rest" | "done";
   paused: boolean;
   phase_ends_at: number | null;
@@ -39,7 +40,7 @@ export const useFavoriteExercises = () =>
 export const useSaveFavoriteExercise = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; work_seconds: number; rest_seconds: number }) => {
+    mutationFn: async (input: { name: string; work_seconds: number; rest_seconds: number; rounds: number }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Non autenticato");
       const { data, error } = await supabase
@@ -151,7 +152,7 @@ export const useRoutineItems = (routineId: string | undefined) =>
 export const useAddRoutineItem = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { routine_id: string; name: string; work_seconds: number; rest_seconds: number; position: number }) => {
+    mutationFn: async (input: { routine_id: string; name: string; work_seconds: number; rest_seconds: number; rounds: number; position: number }) => {
       const { data, error } = await supabase
         .from("tabata_routine_items").insert(input).select().single();
       if (error) throw error;
@@ -249,7 +250,7 @@ export const useEndSession = () => {
 export type PublicTabataRoutine = {
   id: string;
   routine_name: string;
-  items: { position: number; name: string; work_seconds: number; rest_seconds: number }[];
+  items: { position: number; name: string; work_seconds: number; rest_seconds: number; rounds: number }[];
 };
 
 export const fetchPublicTabataRoutine = async (routineId: string): Promise<PublicTabataRoutine | null> => {

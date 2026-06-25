@@ -44,6 +44,7 @@ const TabataRoutines = () => {
   const [itemName, setItemName] = useState("");
   const [itemWork, setItemWork] = useState(20);
   const [itemRest, setItemRest] = useState(10);
+  const [itemRounds, setItemRounds] = useState(1);
   const [saveAsFav, setSaveAsFav] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -71,10 +72,11 @@ const TabataRoutines = () => {
         name: itemName.trim(),
         work_seconds: itemWork,
         rest_seconds: itemRest,
+        rounds: itemRounds,
         position: sortedItems.length,
       });
       if (saveAsFav) {
-        await saveFavorite.mutateAsync({ name: itemName.trim(), work_seconds: itemWork, rest_seconds: itemRest });
+        await saveFavorite.mutateAsync({ name: itemName.trim(), work_seconds: itemWork, rest_seconds: itemRest, rounds: itemRounds });
       }
       setItemName("");
     } catch {
@@ -82,7 +84,7 @@ const TabataRoutines = () => {
     }
   };
 
-  const addFromFavorite = async (fav: { name: string; work_seconds: number; rest_seconds: number }) => {
+  const addFromFavorite = async (fav: { name: string; work_seconds: number; rest_seconds: number; rounds: number }) => {
     if (!current) return;
     try {
       await addItem.mutateAsync({
@@ -90,6 +92,7 @@ const TabataRoutines = () => {
         name: fav.name,
         work_seconds: fav.work_seconds,
         rest_seconds: fav.rest_seconds,
+        rounds: fav.rounds,
         position: sortedItems.length,
       });
     } catch {
@@ -232,6 +235,7 @@ const TabataRoutines = () => {
                       <p className="font-medium truncate">{item.name}</p>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider">
                         Lavoro {item.work_seconds}s · Recupero {item.rest_seconds}s
+                        {item.rounds > 1 && <> · x{item.rounds}</>}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -262,7 +266,7 @@ const TabataRoutines = () => {
               {/* Form aggiunta esercizio */}
               <div className="bg-card border border-border rounded-xl p-4 mb-6">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Aggiungi esercizio</p>
-                <div className="grid grid-cols-[1fr_90px_90px] gap-2 mb-2">
+                <div className="grid grid-cols-[1fr_90px_90px_90px] gap-2 mb-2">
                   <Input
                     placeholder="Nome esercizio"
                     value={itemName}
@@ -271,7 +275,14 @@ const TabataRoutines = () => {
                   />
                   <Input type="number" min={1} value={itemWork} onChange={(e) => setItemWork(Number(e.target.value) || 1)} aria-label="Secondi lavoro" />
                   <Input type="number" min={0} value={itemRest} onChange={(e) => setItemRest(Number(e.target.value) || 0)} aria-label="Secondi recupero" />
+                  <Input type="number" min={1} value={itemRounds} onChange={(e) => setItemRounds(Number(e.target.value) || 1)} aria-label="Numero ripetizioni" />
                 </div>
+                <p className="grid grid-cols-[1fr_90px_90px_90px] gap-2 text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">
+                  <span />
+                  <span>Lavoro</span>
+                  <span>Recupero</span>
+                  <span>Ripetizioni</span>
+                </p>
                 <div className="flex items-center justify-between gap-3">
                   <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                     <input type="checkbox" checked={saveAsFav} onChange={(e) => setSaveAsFav(e.target.checked)} />
@@ -297,7 +308,9 @@ const TabataRoutines = () => {
                       <button onClick={() => addFromFavorite(f)} className="flex items-center gap-1.5">
                         <Dumbbell className="h-3 w-3 text-primary" />
                         {f.name}
-                        <span className="text-muted-foreground">{f.work_seconds}s/{f.rest_seconds}s</span>
+                        <span className="text-muted-foreground">
+                          {f.work_seconds}s/{f.rest_seconds}s{f.rounds > 1 && <> x{f.rounds}</>}
+                        </span>
                       </button>
                       <button
                         onClick={() => deleteFavorite.mutate(f.id)}
