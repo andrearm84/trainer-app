@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Loader2, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -122,10 +122,30 @@ const Brand = () => (
   </div>
 );
 
+// Routine/stato fittizi per QA visiva locale (?demo=1): nessuna chiamata a Supabase.
+const DEMO_ROUTINE: PublicTabataRoutine = {
+  id: "demo",
+  routine_name: "Demo WOD",
+  items: [
+    { position: 1, name: "Burpees", work_seconds: 40, rest_seconds: 20, rounds: 3 },
+    { position: 2, name: "Kettlebell Swing", work_seconds: 40, rest_seconds: 20, rounds: 2 },
+    { position: 3, name: "Box Jump", work_seconds: 40, rest_seconds: 20, rounds: 1 },
+  ],
+};
+
 const TabataDisplay = () => {
   const { routineId } = useParams();
-  const [routine, setRoutine] = useState<PublicTabataRoutine | null | undefined>(undefined);
-  const [liveState, setLiveState] = useState<TabataLiveState | null>(null);
+  const [searchParams] = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+  const [routine, setRoutine] = useState<PublicTabataRoutine | null | undefined>(isDemo ? DEMO_ROUTINE : undefined);
+  const [liveState, setLiveState] = useState<TabataLiveState | null>(isDemo ? {
+    item_index: 0,
+    round: 1,
+    phase: "work",
+    paused: false,
+    phase_ends_at: Date.now() + 27_000,
+    remaining_ms: null,
+  } : null);
   const [now, setNow] = useState(Date.now());
   const lastBeepKeyRef = useRef<string | null>(null);
   const lastAnnouncedKeyRef = useRef<string | null>(null);
@@ -149,12 +169,12 @@ const TabataDisplay = () => {
   }, []);
 
   useEffect(() => {
-    if (!routineId) return;
+    if (!routineId || isDemo) return;
     fetchPublicTabataRoutine(routineId).then(setRoutine).catch(() => setRoutine(null));
-  }, [routineId]);
+  }, [routineId, isDemo]);
 
   useEffect(() => {
-    if (!routineId) return;
+    if (!routineId || isDemo) return;
     const channel = supabase.channel(tabataChannelName(routineId));
     channel.on("broadcast", { event: "state" }, ({ payload }) => {
       setLiveState(payload as TabataLiveState);
@@ -165,7 +185,7 @@ const TabataDisplay = () => {
       }
     });
     return () => { supabase.removeChannel(channel); };
-  }, [routineId]);
+  }, [routineId, isDemo]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
