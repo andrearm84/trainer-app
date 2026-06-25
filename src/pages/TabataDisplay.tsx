@@ -27,6 +27,10 @@ const getAudioCtx = () => {
 
 const playBeep = (freq: number) => {
   const ctx = getAudioCtx();
+  // Il browser sospende l'AudioContext quando la pagina va in background (es. tablet
+  // che si blocca): senza una resume esplicita qui, i beep restano muti finché non si
+  // tocca di nuovo lo schermo.
+  if (ctx.state === "suspended") ctx.resume();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = "sine";
@@ -40,6 +44,7 @@ const playBeep = (freq: number) => {
 
 const speak = (text: string) => {
   if (!("speechSynthesis" in window)) return;
+  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -158,6 +163,19 @@ const TabataDisplay = () => {
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
+  }, []);
+
+  // Quando il dispositivo si risveglia da standby/tab in background, il countdown si
+  // auto-corregge subito (si basa su un timestamp assoluto), ma l'AudioContext resta
+  // sospeso finché non lo riprendiamo esplicitamente: altrimenti i beep restano muti.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      setNow(Date.now());
+      if (sharedAudioCtx?.state === "suspended") sharedAudioCtx.resume();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
   const secLeft = liveState
