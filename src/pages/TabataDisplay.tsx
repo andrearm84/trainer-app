@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, Tv, Volume2 } from "lucide-react";
+import { Loader2, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchPublicTabataRoutine, tabataChannelName,
@@ -14,8 +14,9 @@ const fmt = (totalSec: number) => {
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 };
 
-// Browser audio richiede una sblocco esplicito da gesture utente, quindi
-// AudioContext/SpeechSynthesis sono condivisi e vengono "risvegliati" al primo tap.
+// Il browser consente l'audio solo dopo un'interazione dell'utente con la pagina:
+// AudioContext/SpeechSynthesis sono condivisi e vengono sbloccati in automatico al
+// primo tocco/click sullo schermo, senza richiedere un pulsante dedicato.
 let sharedAudioCtx: AudioContext | null = null;
 const getAudioCtx = () => {
   if (!sharedAudioCtx) {
@@ -23,6 +24,16 @@ const getAudioCtx = () => {
     sharedAudioCtx = new Ctor();
   }
   return sharedAudioCtx;
+};
+
+const unlockAudio = () => {
+  const ctx = getAudioCtx();
+  if (ctx.state === "suspended") ctx.resume();
+  if ("speechSynthesis" in window) {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+  }
 };
 
 const playBeep = (freq: number) => {
@@ -101,16 +112,6 @@ const ExerciseTable = ({ items }: { items: PublicTabataRoutine["items"] }) => (
   </div>
 );
 
-const SoundUnlockHint = ({ onClick }: { onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className="fixed bottom-6 right-6 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-400/40 text-orange-300 bg-orange-400/10 backdrop-blur text-sm font-bold uppercase tracking-widest animate-pulse"
-  >
-    <Volume2 className="h-4 w-4" />
-    Tocca per attivare l'audio
-  </button>
-);
-
 const Brand = () => (
   <div className="flex items-center gap-3">
     <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_3px_rgba(251,146,60,0.8)]" />
@@ -126,20 +127,26 @@ const TabataDisplay = () => {
   const [routine, setRoutine] = useState<PublicTabataRoutine | null | undefined>(undefined);
   const [liveState, setLiveState] = useState<TabataLiveState | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [soundReady, setSoundReady] = useState(false);
   const lastBeepKeyRef = useRef<string | null>(null);
   const lastAnnouncedKeyRef = useRef<string | null>(null);
 
-  const enableSound = () => {
-    const ctx = getAudioCtx();
-    if (ctx.state === "suspended") ctx.resume();
-    if ("speechSynthesis" in window) {
-      const u = new SpeechSynthesisUtterance(" ");
-      u.volume = 0;
-      window.speechSynthesis.speak(u);
-    }
-    setSoundReady(true);
-  };
+  // Tenta lo sblocco audio appena la pagina carica (funziona se il browser concede
+  // engagement implicito) e comunque lo sblocca silenziosamente al primo tocco/click
+  // sullo schermo, senza nessun pulsante visibile da premere.
+  useEffect(() => {
+    unlockAudio();
+    const onFirstInteraction = () => {
+      unlockAudio();
+      document.removeEventListener("pointerdown", onFirstInteraction);
+      document.removeEventListener("keydown", onFirstInteraction);
+    };
+    document.addEventListener("pointerdown", onFirstInteraction);
+    document.addEventListener("keydown", onFirstInteraction);
+    return () => {
+      document.removeEventListener("pointerdown", onFirstInteraction);
+      document.removeEventListener("keydown", onFirstInteraction);
+    };
+  }, []);
 
   useEffect(() => {
     if (!routineId) return;
@@ -189,24 +196,24 @@ const TabataDisplay = () => {
   // Beep negli ultimi 3 secondi di lavoro o recupero (vale sia per il countdown
   // che porta alla partenza del prossimo esercizio sia per quello di fine).
   useEffect(() => {
-    if (!soundReady || !liveState || liveState.paused || liveState.phase === "done") return;
+    if (!liveState || liveState.paused || liveState.phase === "done") return;
     if (secLeft <= 0 || secLeft > 3) return;
     const key = `${liveState.item_index}-${liveState.phase}-${secLeft}`;
     if (lastBeepKeyRef.current === key) return;
     lastBeepKeyRef.current = key;
     playBeep(secLeft === 1 ? 1046 : 784);
-  }, [soundReady, secLeft, liveState?.item_index, liveState?.phase, liveState?.paused]);
+  }, [secLeft, liveState?.item_index, liveState?.phase, liveState?.paused]);
 
   // Annuncio vocale al cambio di fase (lavoro/recupero/fine).
   useEffect(() => {
-    if (!soundReady || !liveState || liveState.paused) return;
+    if (!liveState || liveState.paused) return;
     const key = `${liveState.item_index}-${liveState.phase}`;
     if (lastAnnouncedKeyRef.current === key) return;
     lastAnnouncedKeyRef.current = key;
     if (liveState.phase === "work") speak("Start");
     else if (liveState.phase === "rest") speak("Rest");
     else if (liveState.phase === "done") speak("Stop");
-  }, [soundReady, liveState?.item_index, liveState?.phase, liveState?.paused]);
+  }, [liveState?.item_index, liveState?.phase, liveState?.paused]);
 
   if (routine === undefined) {
     return (
@@ -242,7 +249,6 @@ const TabataDisplay = () => {
           </div>
           <ExerciseTable items={items} />
         </div>
-        {!soundReady && <SoundUnlockHint onClick={enableSound} />}
       </div>
     );
   }
@@ -303,7 +309,6 @@ const TabataDisplay = () => {
           </div>
         )}
       </div>
-      {!soundReady && <SoundUnlockHint onClick={enableSound} />}
     </div>
   );
 };
