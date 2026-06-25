@@ -53,6 +53,44 @@ const playBeep = (freq: number) => {
   osc.stop(ctx.currentTime + 0.15);
 };
 
+// Gong di apertura: suonato solo all'inizio assoluto della lezione (esercizio 1, round 1).
+const playGong = () => {
+  const ctx = getAudioCtx();
+  if (ctx.state === "suspended") ctx.resume();
+  const start = ctx.currentTime;
+  [196, 392].forEach((freq) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.4, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 1.2);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 1.2);
+  });
+};
+
+// Piccola fanfara ascendente per la fine della lezione.
+const playFanfare = () => {
+  const ctx = getAudioCtx();
+  if (ctx.state === "suspended") ctx.resume();
+  [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+    const start = ctx.currentTime + i * 0.12;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.3, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.3);
+  });
+};
+
 const speak = (text: string) => {
   if (!("speechSynthesis" in window)) return;
   if (window.speechSynthesis.paused) window.speechSynthesis.resume();
@@ -236,11 +274,15 @@ const TabataDisplay = () => {
     lastAnnouncedKeyRef.current = key;
     if (liveState.phase === "work") {
       const item = routine.items[liveState.item_index];
+      const isFirst = liveState.item_index === 0 && liveState.round === 1;
       const isLastRound = liveState.item_index === routine.items.length - 1 && item && liveState.round === item.rounds;
-      speak(isLastRound ? "Last round" : "Start");
+      const halfwayIndex = Math.floor(routine.items.length / 2);
+      const isHalfway = routine.items.length >= 2 && liveState.item_index === halfwayIndex && liveState.round === 1;
+      if (isFirst) playGong();
+      speak(isLastRound ? "Last round" : isHalfway ? "Halfway there" : "Start");
     }
     else if (liveState.phase === "rest") speak("Rest");
-    else if (liveState.phase === "done") speak("Stop");
+    else if (liveState.phase === "done") { playFanfare(); speak("Stop"); }
   }, [liveState?.item_index, liveState?.phase, liveState?.paused, routine]);
 
   if (routine === undefined) {
