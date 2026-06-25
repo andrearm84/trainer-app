@@ -230,14 +230,18 @@ const TabataDisplay = () => {
 
   // Annuncio vocale al cambio di fase (lavoro/recupero/fine).
   useEffect(() => {
-    if (!liveState || liveState.paused) return;
+    if (!liveState || liveState.paused || !routine) return;
     const key = `${liveState.item_index}-${liveState.phase}`;
     if (lastAnnouncedKeyRef.current === key) return;
     lastAnnouncedKeyRef.current = key;
-    if (liveState.phase === "work") speak("Start");
+    if (liveState.phase === "work") {
+      const item = routine.items[liveState.item_index];
+      const isLastRound = liveState.item_index === routine.items.length - 1 && item && liveState.round === item.rounds;
+      speak(isLastRound ? "Last round" : "Start");
+    }
     else if (liveState.phase === "rest") speak("Rest");
     else if (liveState.phase === "done") speak("Stop");
-  }, [liveState?.item_index, liveState?.phase, liveState?.paused]);
+  }, [liveState?.item_index, liveState?.phase, liveState?.paused, routine]);
 
   if (routine === undefined) {
     return (
