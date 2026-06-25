@@ -47,24 +47,24 @@ const speak = (text: string) => {
   window.speechSynthesis.speak(utterance);
 };
 
-// Lavoro = energia neon (ciano acceso), recupero = stessa famiglia ma più tenue
+// Lavoro = energia arancione accesa (in linea con il colore primario dell'app), recupero = stessa famiglia ma più tenue
 const PHASE = {
   work: {
-    text: "text-cyan-300",
-    ring: "ring-cyan-400/60",
-    glow: "shadow-[0_0_90px_-10px_rgba(34,211,238,0.7)]",
-    bgGlow: "bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(34,211,238,0.28),transparent_70%)]",
-    badge: "border-cyan-400/40 text-cyan-300 bg-cyan-400/10",
-    dot: "bg-cyan-400 shadow-[0_0_12px_3px_rgba(34,211,238,0.8)]",
-    textShadow: "[text-shadow:0_0_35px_rgba(34,211,238,0.6)]",
+    text: "text-orange-300",
+    ring: "ring-orange-400/60",
+    glow: "shadow-[0_0_90px_-10px_rgba(251,146,60,0.7)]",
+    bgGlow: "bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(251,146,60,0.28),transparent_70%)]",
+    badge: "border-orange-400/40 text-orange-300 bg-orange-400/10",
+    dot: "bg-orange-400 shadow-[0_0_12px_3px_rgba(251,146,60,0.8)]",
+    textShadow: "[text-shadow:0_0_35px_rgba(251,146,60,0.6)]",
   },
   rest: {
-    text: "text-sky-200",
-    ring: "ring-sky-300/30",
-    glow: "shadow-[0_0_50px_-15px_rgba(125,211,252,0.35)]",
-    bgGlow: "bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(125,211,252,0.12),transparent_70%)]",
-    badge: "border-sky-300/30 text-sky-200 bg-sky-300/10",
-    dot: "bg-sky-300",
+    text: "text-orange-200",
+    ring: "ring-orange-200/30",
+    glow: "shadow-[0_0_50px_-15px_rgba(254,215,170,0.35)]",
+    bgGlow: "bg-[radial-gradient(ellipse_80%_55%_at_50%_-10%,rgba(254,215,170,0.12),transparent_70%)]",
+    badge: "border-orange-200/30 text-orange-200 bg-orange-200/10",
+    dot: "bg-orange-200",
     textShadow: "",
   },
 } as const;
@@ -97,7 +97,7 @@ const ExerciseTable = ({ items }: { items: PublicTabataSession["items"] }) => (
 const SoundUnlockHint = ({ onClick }: { onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="fixed bottom-6 right-6 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-400/40 text-cyan-300 bg-cyan-400/10 backdrop-blur text-sm font-bold uppercase tracking-widest animate-pulse"
+    className="fixed bottom-6 right-6 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-400/40 text-orange-300 bg-orange-400/10 backdrop-blur text-sm font-bold uppercase tracking-widest animate-pulse"
   >
     <Volume2 className="h-4 w-4" />
     Tocca per attivare l'audio
@@ -106,11 +106,11 @@ const SoundUnlockHint = ({ onClick }: { onClick: () => void }) => (
 
 const Brand = () => (
   <div className="flex items-center gap-3">
-    <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_3px_rgba(34,211,238,0.8)]" />
+    <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_3px_rgba(251,146,60,0.8)]" />
     <p className="font-display font-bold text-lg md:text-xl uppercase tracking-[0.4em] text-white">
       Training Space
     </p>
-    <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_3px_rgba(34,211,238,0.8)]" />
+    <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_3px_rgba(251,146,60,0.8)]" />
   </div>
 );
 
@@ -191,7 +191,7 @@ const TabataDisplay = () => {
   if (session === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#06080c]">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
       </div>
     );
   }
@@ -216,7 +216,7 @@ const TabataDisplay = () => {
         <div className="relative flex flex-col items-center px-6 md:px-12 py-10 gap-10">
           <Brand />
           <div className="flex flex-col items-center text-center gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-cyan-400" />
+            <Loader2 className="h-10 w-10 animate-spin text-orange-400" />
             <p className="text-2xl font-display font-bold uppercase text-white">In attesa del trainer…</p>
             <p className="text-sm text-zinc-400 font-semibold">{session.routine_name}</p>
           </div>

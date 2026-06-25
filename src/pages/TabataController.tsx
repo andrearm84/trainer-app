@@ -79,14 +79,18 @@ const TabataController = () => {
     }
   }, [liveState, ready]);
 
-  // Termina automaticamente la sessione lato DB a fine sequenza (una sola volta)
+  // Termina automaticamente la sessione lato DB a fine sequenza (una sola volta),
+  // poi torna alla lista lezioni senza bisogno di un click manuale del trainer.
   const endedRef = useRef(false);
   useEffect(() => {
     if (liveState?.phase === "done" && sessionId && !endedRef.current) {
       endedRef.current = true;
       endSession.mutate(sessionId);
+      toast.success("Lezione conclusa");
+      const id = setTimeout(() => navigate("/tabata"), 4000);
+      return () => clearTimeout(id);
     }
-  }, [liveState?.phase, sessionId, endSession]);
+  }, [liveState?.phase, sessionId, endSession, navigate]);
 
   const transition = () => {
     const ls = liveRef.current;
