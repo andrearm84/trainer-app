@@ -195,6 +195,9 @@ const TabataDisplay = () => {
 
   // Beep negli ultimi 3 secondi di lavoro o recupero (vale sia per il countdown
   // che porta alla partenza del prossimo esercizio sia per quello di fine).
+  // Il tono passa dall'AudioContext, che molti browser bloccano finché lo schermo
+  // non viene toccato: il numero parlato usa SpeechSynthesis, che su questi dispositivi
+  // resta udibile anche senza alcuna interazione, quindi garantisce sempre il cue.
   useEffect(() => {
     if (!liveState || liveState.paused || liveState.phase === "done") return;
     if (secLeft <= 0 || secLeft > 3) return;
@@ -202,6 +205,7 @@ const TabataDisplay = () => {
     if (lastBeepKeyRef.current === key) return;
     lastBeepKeyRef.current = key;
     playBeep(secLeft === 1 ? 1046 : 784);
+    if (getAudioCtx().state !== "running") speak(String(secLeft));
   }, [secLeft, liveState?.item_index, liveState?.phase, liveState?.paused]);
 
   // Annuncio vocale al cambio di fase (lavoro/recupero/fine).
