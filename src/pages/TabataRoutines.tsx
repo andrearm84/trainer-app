@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Plus, Star, Trash2, Loader2, ArrowUp, ArrowDown, PlayCircle, Tv, Dumbbell, X,
+  Plus, Star, Trash2, Loader2, ArrowUp, ArrowDown, PlayCircle, Tv, Dumbbell, X, Pencil, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,17 @@ const TabataRoutines = () => {
   const [itemRounds, setItemRounds] = useState(1);
   const [saveAsFav, setSaveAsFav] = useState(false);
   const [starting, setStarting] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editWork, setEditWork] = useState(20);
+  const [editRest, setEditRest] = useState(10);
+  const [editRounds, setEditRounds] = useState(1);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkWork, setBulkWork] = useState("");
+  const [bulkRest, setBulkRest] = useState("");
+  const [bulkRounds, setBulkRounds] = useState("");
 
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => a.position - b.position),
@@ -107,6 +118,62 @@ const TabataRoutines = () => {
     swapItems.mutate({ routine_id: current.id, a: item, b: target });
   };
 
+  const startEdit = (item: TabataRoutineItem) => {
+    setEditingId(item.id);
+    setEditName(item.name);
+    setEditWork(item.work_seconds);
+    setEditRest(item.rest_seconds);
+    setEditRounds(item.rounds);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async () => {
+    if (!current || !editingId || !editName.trim()) return;
+    try {
+      await updateItem.mutateAsync({
+        id: editingId,
+        routine_id: current.id,
+        name: editName.trim(),
+        work_seconds: editWork,
+        rest_seconds: editRest,
+        rounds: editRounds,
+      });
+      setEditingId(null);
+    } catch {
+      toast.error("Errore nella modifica dell'esercizio");
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectedItems = sortedItems.filter((i) => selectedIds.has(i.id));
+
+  const applyBulkEdit = async () => {
+    if (!current || selectedItems.length === 0) return;
+    const patch: Partial<TabataRoutineItem> = {};
+    if (bulkWork.trim() !== "") patch.work_seconds = Number(bulkWork);
+    if (bulkRest.trim() !== "") patch.rest_seconds = Number(bulkRest);
+    if (bulkRounds.trim() !== "") patch.rounds = Number(bulkRounds);
+    if (Object.keys(patch).length === 0) return;
+    try {
+      await Promise.all(
+        selectedItems.map((i) => updateItem.mutateAsync({ id: i.id, routine_id: current.id, ...patch }))
+      );
+      toast.success(`${selectedItems.length} esercizi aggiornati`);
+      setSelectedIds(new Set());
+      setBulkWork(""); setBulkRest(""); setBulkRounds("");
+    } catch {
+      toast.error("Errore nella modifica multipla");
+    }
+  };
+
   const handleStart = async () => {
     if (!current || sortedItems.length === 0) return;
     setStarting(true);
@@ -160,7 +227,7 @@ const TabataRoutines = () => {
             {routines.map((r) => (
               <button
                 key={r.id}
-                onClick={() => setSelectedId(r.id)}
+                onClick={() => { setSelectedId(r.id); setSelectedIds(new Set()); setEditingId(null); }}
                 className={`w-full text-left px-4 py-3 rounded-xl border transition-smooth flex items-center justify-between gap-2 ${
                   r.id === currentId
                     ? "bg-primary/10 border-primary shadow-glow"
@@ -216,7 +283,7 @@ const TabataRoutines = () => {
                         <AlertDialogCancel>Annulla</AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={() => { deleteRoutine.mutate(current.id); setSelectedId(null); }}
+                          onClick={() => { deleteRoutine.mutate(current.id); setSelectedId(null); setSelectedIds(new Set()); setEditingId(null); }}
                         >
                           Elimina
                         </AlertDialogAction>
@@ -227,35 +294,104 @@ const TabataRoutines = () => {
               </div>
 
               {/* Lista esercizi */}
+              {selectedItems.length > 0 && (
+                <div className="bg-primary/10 border border-primary/40 rounded-xl p-3 mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-primary shrink-0">
+                    {selectedItems.length} selezionati
+                  </span>
+                  <Input
+                    type="number" min={1} placeholder="Lavoro"
+                    value={bulkWork} onChange={(e) => setBulkWork(e.target.value)}
+                    className="w-24 h-8" aria-label="Lavoro (bulk)"
+                  />
+                  <Input
+                    type="number" min={0} placeholder="Recupero"
+                    value={bulkRest} onChange={(e) => setBulkRest(e.target.value)}
+                    className="w-24 h-8" aria-label="Recupero (bulk)"
+                  />
+                  <Input
+                    type="number" min={1} placeholder="Ripetiz."
+                    value={bulkRounds} onChange={(e) => setBulkRounds(e.target.value)}
+                    className="w-24 h-8" aria-label="Ripetizioni (bulk)"
+                  />
+                  <Button size="sm" onClick={applyBulkEdit}>Applica</Button>
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={() => { setSelectedIds(new Set()); setBulkWork(""); setBulkRest(""); setBulkRounds(""); }}
+                  >
+                    Annulla selezione
+                  </Button>
+                </div>
+              )}
               <div className="space-y-2 mb-6">
-                {sortedItems.map((item, idx) => (
-                  <div key={item.id} className="bg-gradient-card border border-border rounded-xl p-3 flex items-center gap-3">
-                    <span className="font-display text-lg text-primary w-7 text-center shrink-0">{String(idx + 1).padStart(2, "0")}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.name}</p>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                        Lavoro {item.work_seconds}s · Recupero {item.rest_seconds}s
-                        {item.rounds > 1 && <> · x{item.rounds}</>}
-                      </p>
+                {sortedItems.map((item, idx) => {
+                  const isEditing = editingId === item.id;
+                  return (
+                    <div key={item.id} className="bg-gradient-card border border-border rounded-xl p-3 flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        aria-label={`Seleziona ${item.name}`}
+                        className="shrink-0"
+                      />
+                      <span className="font-display text-lg text-primary w-7 text-center shrink-0">{String(idx + 1).padStart(2, "0")}</span>
+                      {isEditing ? (
+                        <div className="flex-1 grid grid-cols-[1fr_70px_70px_70px] gap-2">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                            aria-label="Nome esercizio"
+                          />
+                          <Input type="number" min={1} value={editWork} onChange={(e) => setEditWork(Number(e.target.value) || 1)} aria-label="Secondi lavoro" />
+                          <Input type="number" min={0} value={editRest} onChange={(e) => setEditRest(Number(e.target.value) || 0)} aria-label="Secondi recupero" />
+                          <Input type="number" min={1} value={editRounds} onChange={(e) => setEditRounds(Number(e.target.value) || 1)} aria-label="Numero ripetizioni" />
+                        </div>
+                      ) : (
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{item.name}</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                            Lavoro {item.work_seconds}s · Recupero {item.rest_seconds}s
+                            {item.rounds > 1 && <> · x{item.rounds}</>}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isEditing ? (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={saveEdit} disabled={!editName.trim()} aria-label="Salva modifiche">
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={cancelEdit} aria-label="Annulla modifiche">
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={() => startEdit(item)} aria-label="Modifica esercizio">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" disabled={idx === 0} onClick={() => move(item, -1)} aria-label="Sposta su">
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" disabled={idx === sortedItems.length - 1} onClick={() => move(item, 1)} aria-label="Sposta giù">
+                              <ArrowDown className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon"
+                              onClick={() => deleteItem.mutate({ id: item.id, routine_id: current.id })}
+                              aria-label="Rimuovi"
+                              className="hover:!text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" disabled={idx === 0} onClick={() => move(item, -1)} aria-label="Sposta su">
-                        <ArrowUp className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" disabled={idx === sortedItems.length - 1} onClick={() => move(item, 1)} aria-label="Sposta giù">
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost" size="icon"
-                        onClick={() => deleteItem.mutate({ id: item.id, routine_id: current.id })}
-                        aria-label="Rimuovi"
-                        className="hover:!text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {sortedItems.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border rounded-xl">
                     Aggiungi il primo esercizio qui sotto.
